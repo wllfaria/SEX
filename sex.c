@@ -3,6 +3,7 @@
 #define EXIT_FAIL 1
 #define EXIT_SUCCESS 0
 #define PLAYERCTL_PLAYING "Playing"
+#define FILE_PATH "~/.config/i3/sex_diary"
 #define BUFFER_SIZE 8
 
 int main(void) {
@@ -29,7 +30,6 @@ int main(void) {
     bool is_playing = is_playing_music(output);
 
     if (!is_playing && was_playing) {
-      syslog(LOG_INFO, "Listening session ended... Storing total time\n");
       was_playing = is_playing;
       time_t end_time = time(NULL);
       time_t delta = end_time - start_time;
@@ -75,7 +75,7 @@ bool is_playing_music(char *output) {
 }
 
 float read_total_time() {
-  FILE *file = fopen("sex_diary", "r");
+  FILE *file = fopen(FILE_PATH, "r");
   float total = 0.0;
 
   if (file == NULL) {
@@ -94,10 +94,12 @@ void store_session(time_t seconds) {
   float minutes = seconds / 60.0;
   float current_total = read_total_time();
   float total = current_total + minutes;
+  syslog(LOG_INFO, "Listening session ended... Storing total time: %f\n",
+         total);
 
-  FILE *file = fopen("/home/wiru/dotfiles/i3/.config/i3/sex_diary", "w");
+  FILE *file = fopen(FILE_PATH, "w");
   if (file == NULL) {
-    perror("Failed to open sex_diary for writing");
+    syslog(LOG_ERR, "failed to write to sex_diary: %s", strerror(errno));
     return;
   }
 
