@@ -3,38 +3,46 @@
 #define EXIT_FAIL 1
 #define EXIT_SUCCESS 0
 #define PLAYERCTL_PLAYING "Playing"
+#define BUFFER_SIZE 100
 
 int main(void) {
-  daemonize();
+  // daemonize();
 
-  FILE *status;
-  char *output = malloc(100);
   bool was_playing = false;
-  time_t start_time = 0;
+  time_t start_time;
+  FILE *status = playerctl_status();
+  char *output = malloc(BUFFER_SIZE);
 
-  while (1) {
-    status = playerctl_status();
-
-    while (fgets(output, sizeof(output) - 1, status) != NULL) {
-      printf("lol\n");
-      bool is_playing = is_playing_music(output);
-      // we were playing music but now we stopped.
-      // so we should calculate and store the total time spent listening
-      if (!is_playing && was_playing) {
-        syslog(LOG_INFO, "Listening session ended... Storing total time\n");
-      }
-      // we weren't playing music, and now we are
-      // so we should start counting the time.
-      else if (is_playing && !was_playing) {
-        syslog(LOG_INFO, "Listening session started... Starting timer\n");
-      }
-      // if the status is either of these:
-      // is_playing && was_playing
-      // !is_playing && !was_playing
-      // we don't have to do nothing.
-    }
+  if (output == NULL) {
+    perror("failed to allocate memory for output");
+    exit(EXIT_FAIL);
   }
 
+  while (fgets(output, sizeof(output) - 1, status) != NULL) {
+    bool is_playing = is_playing_music(output);
+    // we were playing music but now we stopped.
+    // so we should calculate and store the total time spent listening
+    if (!is_playing && was_playing) {
+      syslog(LOG_INFO, "Listening session ended... Storing total time\n");
+      was_playing = was_playing;
+      time_t end_time = time(NULL);
+      time_t delta = end_time - start_time;
+      printf("Total listening time: %li seconds\n", delta);
+    }
+    // we weren't playing music, and now we are
+    // so we should start counting the time.
+    else if (is_playing && !was_playing) {
+      syslog(LOG_INFO, "Listening session started... Starting timer\n");
+      was_playing = is_playing;
+      time(&start_time);
+    }
+    // if the status is either of these:
+    // is_playing && was_playing
+    // !is_playing && !was_playing
+    // we don't have to do nothing.
+  }
+
+  pclose(status);
   closelog();
   free(output);
   exit(EXIT_SUCCESS);
@@ -50,9 +58,10 @@ void daemonize() {
 }
 
 FILE *playerctl_status() {
-  FILE *status = popen("playerctl status", "r");
+  FILE *status = popen("playerctl --follow status", "r");
   if (status == NULL) {
-    syslog(LOG_ERR, "failed to run playerctl status command\n");
+    syslog(LOG_ERR, "failed to run playerctl status command: %s\n",
+           strerror(errno));
     exit(EXIT_FAIL);
   }
   return status;
