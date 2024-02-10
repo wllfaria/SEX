@@ -107,7 +107,7 @@ void store_session(time_t seconds) {
   fclose(file);
 }
 
-void gracefully_stop(int signum) {
+void gracefully_stop() {
   syslog(LOG_INFO, "SIGTERM received, shutting down...\n");
   closelog();
   exit(EXIT_SUCCESS);

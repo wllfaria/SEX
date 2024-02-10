@@ -14,4 +14,4 @@ FILE *playerctl_status();
 bool is_playing_music(char *output);
 float read_total_time();
 void store_session(time_t seconds);
-void gracefully_stop(int signum);
+void gracefully_stop();
