@@ -7,5 +7,5 @@
 #include <unistd.h>
 
 void daemonize();
-void playerctl_status(FILE *status);
+FILE *playerctl_status();
 bool is_playing_music(char *output);
