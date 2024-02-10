@@ -7,6 +7,11 @@
 #define BUFFER_SIZE 8
 
 int main(void) {
+
+  if (is_sex_running("sex") >= 2) {
+    exit(0);
+  }
+
   daemonize();
 
   bool was_playing = false;
@@ -105,4 +110,27 @@ void store_session(time_t seconds) {
 
   fprintf(file, "%.2f\n", total);
   fclose(file);
+}
+
+int is_sex_running(const char *cmd) {
+  char command[256];
+  FILE *fp;
+  int count = 0;
+
+  snprintf(command, sizeof(command), "pgrep -f %s", cmd);
+
+  fp = popen(command, "r");
+  if (fp == NULL) {
+    syslog(LOG_ERR, "failed to grep for existing process: %s", strerror(errno));
+    exit(EXIT_FAIL);
+  }
+
+  char buffer[1024];
+  if (fgets(buffer, sizeof(buffer), fp) != NULL) {
+    count++;
+  }
+
+  pclose(fp);
+
+  return count;
 }
