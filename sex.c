@@ -8,6 +8,8 @@
 int main(void) {
   daemonize();
 
+  signal(SIGTERM, gracefully_stop);
+
   bool was_playing = false;
   time_t start_time;
   FILE *status = playerctl_status();
@@ -103,4 +105,10 @@ void store_session(time_t seconds) {
 
   fprintf(file, "%.2f\n", total);
   fclose(file);
+}
+
+void gracefully_stop(int signum) {
+  syslog(LOG_INFO, "SIGTERM received, shutting down...\n");
+  closelog();
+  exit(EXIT_SUCCESS);
 }
