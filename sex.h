@@ -1,5 +1,4 @@
 #include <errno.h>
-#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,4 +13,3 @@ FILE *playerctl_status();
 bool is_playing_music(char *output);
 float read_total_time();
 void store_session(time_t seconds);
-void gracefully_stop();

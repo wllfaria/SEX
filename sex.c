@@ -8,8 +8,6 @@
 int main(void) {
   daemonize();
 
-  signal(SIGTERM, gracefully_stop);
-
   bool was_playing = false;
   time_t start_time;
   FILE *status = playerctl_status();
@@ -20,7 +18,7 @@ int main(void) {
     exit(EXIT_FAIL);
   }
 
-  while (fgets(output, sizeof(output), status) != NULL) {
+  while (fgets(output, BUFFER_SIZE, status) != NULL) {
     if (output[strlen(output) - 1] == '\n') {
       output[strlen(output) - 1] = '\0';
     }
@@ -97,7 +95,7 @@ void store_session(time_t seconds) {
   float current_total = read_total_time();
   float total = current_total + minutes;
 
-  FILE *file = fopen("sex_diary", "w");
+  FILE *file = fopen("/home/wiru/dotfiles/i3/.config/i3/sex_diary", "w");
   if (file == NULL) {
     perror("Failed to open sex_diary for writing");
     return;
@@ -105,10 +103,4 @@ void store_session(time_t seconds) {
 
   fprintf(file, "%.2f\n", total);
   fclose(file);
-}
-
-void gracefully_stop() {
-  syslog(LOG_INFO, "SIGTERM received, shutting down...\n");
-  closelog();
-  exit(EXIT_SUCCESS);
 }
